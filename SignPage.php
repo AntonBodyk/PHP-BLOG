@@ -6,11 +6,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="./static/css/style.css">
+    <link type="text/css"  href="./static/css/style.css">
+<!--    <style>--><?php //include './static/css/style.php'; ?><!--</style>-->
     <title>Вход в аккаунт</title>
 </head>
 <body>
-  <div class="signin">
+
+    <div class="signin">
       <h1>Вход</h1>
       <form action="#" class="signin-form">
           <div class="mb-3">

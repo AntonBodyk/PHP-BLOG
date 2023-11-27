@@ -10,10 +10,48 @@
     <title>Регистрация</title>
 </head>
 <body>
+<?php
+require_once './classes/db.php';
 
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    $name = isset($_POST["name"]) ? $_POST['name'] : null;
+    $email = isset($_POST["email"]) ? $_POST['email'] : null;
+    $password = password_hash(isset($_POST["password"]) ? $_POST['password'] : null, PASSWORD_DEFAULT); // Хеширование пароля
+
+    if(empty($name)){
+        echo 'Поле name не может быть пустым';
+        exit();
+    }
+    try {
+
+        $conn = connectToDatabase();
+
+
+        $stmt = $conn->prepare("INSERT INTO users (name, email, password, created_at, updated_at) VALUES (:name, :email, :password, NOW(), NOW())");
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':email', $email);
+        $stmt->bindParam(':password', $password);
+
+        $stmt->execute();
+
+        error_log("Redirecting to SignPage");
+        header("Location: /SignPage.php");
+        exit();
+
+//        echo '<div class="alert alert-success" role="alert">
+//                        Регистрация прошла успешно!
+//              </div>';
+    } catch (PDOException $e) {
+        echo "Error: " . $e->getMessage();
+    } finally {
+        $conn = null;
+    }
+}
+?>
 <div class="registration">
     <h1>Регистрация</h1>
-    <form action="#" class="registration-form">
+    <form action="#" class="registration-form" method="post">
         <div class="mb-3">
             <label for="exampleInputName" class="form-label">Имя</label>
             <input type="text" class="form-control" id="exampleInputName" name="name" required>
@@ -39,7 +77,6 @@
 
         <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
     </form>
-
 </div>
 
 
