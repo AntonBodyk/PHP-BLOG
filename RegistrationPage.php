@@ -35,8 +35,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $stmt->execute();
 
+        $redirect_url = "http://localhost:63342/php-blog/SignPage.php";
         error_log("Redirecting to SignPage");
-        header("Location: /SignPage.php");
+        header("Location: " . $redirect_url);
         exit();
 
 //        echo '<div class="alert alert-success" role="alert">
