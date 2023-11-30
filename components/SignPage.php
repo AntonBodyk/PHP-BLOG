@@ -14,7 +14,6 @@
         require '../vendor/autoload.php';
         require_once  '../classes/db.php';
         use Firebase\JWT\JWT;
-        phpinfo();
         function getAuthorizationToken($user_id, $secret_key){
             $token_payload = array(
                 "user_id" => $user_id,
@@ -55,23 +54,22 @@
             $query = $conn->prepare("SELECT id, password FROM users WHERE email = ?");
             $query->execute([$email]);
 
-            // Используем fetch вместо rowCount
+
             $user = $query->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
-                // Пароль верен
-                $secret_key = bin2hex(random_bytes(32)); // Замените на ваш секретный ключ
+
+                $secret_key = bin2hex(random_bytes(32));
                 $token = getAuthorizationToken($user['id'], $secret_key);
 
-                // Устанавливаем cookie
+
                 setcookie("token", $token, time() + 3600, "/");
 
-                // Выводим сообщение в консоль браузера
+
                 echo "<script>console.log('Cookie установлено успешно');</script>";
                 // Выводим JSON-ответ
 //                echo json_encode(["token" => $token]);
             } else {
-                // Пользователь не найден или пароль неверен
                 echo "<script>alert('Зарегистрируйтесь!Или проверте введеные данные!');</script>";
             }
         }

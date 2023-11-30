@@ -1,0 +1,132 @@
+h3{
+    font-size: 40px;
+    color:darkslategray;
+    margin: 30px 0 0 100px;
+    padding-top: 30px;
+}
+.navbar{
+    height: 50px;
+    background-color: darkslategray;
+    box-shadow: 2px 2px 4px grey;
+    display: flex;
+}
+.navbar p{
+    font-family: 'Pixelify Sans', sans-serif;
+    font-size: 40px;
+    color: aliceblue;
+    padding-left: 100px;
+    margin-top: -15px    ;
+}
+/*.new-post{*/
+/*    margin: 30px 0 0 100px;*/
+/*}*/
+
+.navbar-btns {
+    margin: -30px 200px 0 0;
+}
+.navbar-btns a{
+    font-family: 'Roboto', sans-serif;
+    font-size: 20px;
+    color: aliceblue;
+    text-decoration: none;
+    outline: none;
+}
+.post-list{
+    margin: 20px 0 0 80px;
+}
+.post-title{
+    padding: 20px 0 0 20px;
+    max-width: 600px;
+    color:darkslategray;
+}
+.post{
+    width: 700px;
+    max-height: 500px;
+    background-color: white;
+    border-radius: 10px;
+    margin: 20px 0 0 100px;
+    cursor: pointer;
+}
+.post-body{
+    padding-left: 20px;
+    max-width: 680px;
+}
+
+.post-icons{
+    display: flex;
+    margin: 100px 0 0 20px;
+    padding-bottom: 10px;
+}
+.delete{
+    margin-left: 100px;
+    margin-top: -20px;
+}
+.post-comment{
+    margin-top: -3px;
+}
+
+.post-comment span{
+    padding-left: 4px;
+}
+.post-like{
+    margin-left: 20px;
+    cursor: pointer;
+}
+.post-like span{
+    padding-left: 4px;
+}
+.post-dislike{
+    margin-left: 20px;
+    cursor: pointer;
+}
+.post-dislike span{
+    padding-left: 4px;
+}
+.comment{
+    font-size: 20px;
+    cursor: pointer;
+}
+.post-delete{
+    margin: -25px 0 0 60%;
+    padding-bottom: 10px;
+    display: flex;
+}
+
+.change{
+    margin-right: 10px;
+}
+
+.dark-theme{
+    background-color: #333;
+}
+.pagination{
+    margin: 30px 0 0 100px;
+}
+
+.post-create-date{
+    margin: 10px 0 10px 20px;
+    font-size: 15px;
+    color: cadetblue;
+}
+
+.post-category{
+    margin: 10px 0 10px 20px;
+    font-size: 15px;
+    color: cornflowerblue;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #006400;
+    border-color: #006400;
+}
+
+.pagination .page-link {
+    color: #006400;
+}
+
+
+.pagination .page-item:not(.active) .page-link:hover {
+    background-color: #004d00;
+    border-color: #004d00;
+    color: #ffffff;
+}

@@ -13,6 +13,7 @@
 <?php
 require_once '../classes/db.php';
 
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = isset($_POST["name"]) ? $_POST['name'] : null;
     $email = isset($_POST["email"]) ? $_POST['email'] : null;
@@ -24,8 +25,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if (empty($name)) {
         $errors[] = 'Поле "Ім\'я" не може бути порожнім';
-    }elseif (!preg_match('/[A-ZА-Я]]/', $password)){
-        $errors = '"Ім\'я" повинно починатися з великої літери';
+    }elseif (!preg_match('/[A-ZА-Я]/', $name)){
+        $errors[] = '"Ім\'я" повинно починатися з великої літери';
     }
 
     if (empty($email)) {
@@ -52,39 +53,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
-    // Хешування паролю
+
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     try {
-        // З'єднання з базою даних
+
         $conn = connectToDatabase();
 
-        // Підготовка SQL-запиту
-        $stmt = $conn->prepare("INSERT INTO users (name, email, password, created_at, updated_at) VALUES (:name, :email, :password, NOW(), NOW())");
+
+        $query = "INSERT INTO users (name, email, password, created_at, updated_at) VALUES (:name, :email, :password, NOW(), NOW())";
+        $stmt = $conn->prepare($query);
         $stmt->bindParam(':name', $name);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':password', $hashedPassword);
 
-        // Виконання запиту
-        $stmt->execute();
 
-        // Редирект на сторінку входу після реєстрації
+        if ($stmt->execute()) {
+            echo "Data inserted successfully";
+        } else {
+            echo "Error executing query";
+            print_r($stmt->errorInfo());
+        }
+
+
         $redirect_url = "http://localhost:63342/php-blog/components/SignPage.php";
         error_log("Redirecting to SignPage");
         header("Location: " . $redirect_url);
         exit();
 
     } catch (PDOException $e) {
-        echo "Error: " . $e->getMessage();
-    } finally {
-        // Закриття з'єднання з базою даних
-        $conn = null;
+        echo 'Помилка бази даних: ' . $e->getMessage();
     }
 }
 ?>
 <div class="registration">
     <h1>Регистрация</h1>
-    <form action="#" class="registration-form" method="post">
+    <form class="registration-form" method="post">
         <div class="mb-3">
             <label for="exampleInputName" class="form-label">Имя</label>
             <input type="text" class="form-control" id="exampleInputName" name="name" required>
