@@ -1,3 +1,7 @@
+.main{
+    background-color: aliceblue;
+}
+
 h3{
     font-size: 40px;
     color:darkslategray;
@@ -30,6 +34,15 @@ h3{
     color: aliceblue;
     text-decoration: none;
     outline: none;
+    margin-left: 20px;
+}
+.user-name{
+    font-family: 'Roboto', sans-serif;
+    font-size: 20px;
+    color: aliceblue;
+    text-decoration: none;
+    outline: none;
+    margin-left: 20px;
 }
 .post-list{
     margin: 20px 0 0 80px;
@@ -44,7 +57,7 @@ h3{
     max-height: 500px;
     background-color: white;
     border-radius: 10px;
-    margin: 20px 0 0 100px;
+    margin: 20px 0 0 80px;
     cursor: pointer;
 }
 .post-body{
@@ -54,7 +67,7 @@ h3{
 
 .post-icons{
     display: flex;
-    margin: 100px 0 0 20px;
+    margin: 100px 0 0 5px;
     padding-bottom: 10px;
 }
 .delete{
@@ -62,8 +75,12 @@ h3{
     margin-top: -20px;
 }
 .post-comment{
-    margin-top: -3px;
+    margin-left: 20px;
 }
+.btn-danger{
+    margin: -10px 0 0 47%;
+}
+
 
 .post-comment span{
     padding-left: 4px;
@@ -115,6 +132,9 @@ h3{
     color: cornflowerblue;
 }
 
+.pagination{
+    margin-bottom: 20px;
+}
 .pagination .page-item.active .page-link {
     background-color: #006400;
     border-color: #006400;

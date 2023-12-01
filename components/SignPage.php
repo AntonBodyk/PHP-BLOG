@@ -14,9 +14,10 @@
         require '../vendor/autoload.php';
         require_once  '../classes/db.php';
         use Firebase\JWT\JWT;
-        function getAuthorizationToken($user_id, $secret_key){
+        function getAuthorizationToken($user_id, $secret_key, $name){
             $token_payload = array(
                 "user_id" => $user_id,
+                "user_name"=> $name,
                 "exp_time" => time() + 3600
             );
             $authorizeToken = JWT::encode($token_payload, $secret_key, 'HS256');
@@ -28,30 +29,30 @@
             $password = isset($_POST['password']) ? $_POST['password'] : null;
 
 
-            $errors = [];
-
-            if (empty($email)) {
-                $errors[] = 'Поле "Email" не може бути порожнім';
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = 'Некоректний формат Email';
-            }
-
-            if (empty($password)) {
-                $errors[] = 'Поле "Пароль" не може бути порожнім';
-            } elseif (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
-                $errors[] = 'Пароль повинен містити принаймні 6 символів і хоча б одну велику літеру';
-            }
-
-            if (!empty($errors)) {
-                foreach ($errors as $error) {
-                    echo '<div class="alert alert-danger" role="alert">' . $error . '</div>';
-                }
-                exit();
-            }
+//            $errors = [];
+//
+//            if (empty($email)) {
+//                $errors[] = 'Поле "Email" не може бути порожнім';
+//            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+//                $errors[] = 'Некоректний формат Email';
+//            }
+//
+//            if (empty($password)) {
+//                $errors[] = 'Поле "Пароль" не може бути порожнім';
+//            } elseif (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
+//                $errors[] = 'Пароль повинен містити принаймні 6 символів і хоча б одну велику літеру';
+//            }
+//
+//            if (!empty($errors)) {
+//                foreach ($errors as $error) {
+//                    echo '<div class="alert alert-danger" role="alert">' . $error . '</div>';
+//                }
+//                exit();
+//            }
             $conn = connectToDataBase();
 
             // Используем параметризованный запрос для предотвращения SQL-инъекций
-            $query = $conn->prepare("SELECT id, password FROM users WHERE email = ?");
+            $query = $conn->prepare("SELECT id, name, password FROM users WHERE email = ?");
             $query->execute([$email]);
 
 
@@ -60,18 +61,21 @@
             if ($user && password_verify($password, $user['password'])) {
 
                 $secret_key = bin2hex(random_bytes(32));
-                $token = getAuthorizationToken($user['id'], $secret_key);
+                $token = getAuthorizationToken($user['id'], $user['name'], $secret_key);
 
 
                 setcookie("token", $token, time() + 3600, "/");
-
+                setcookie("user_name", $user['name'], time() + 3600, "/");
 
                 echo "<script>console.log('Cookie установлено успешно');</script>";
-                // Выводим JSON-ответ
-//                echo json_encode(["token" => $token]);
+
             } else {
                 echo "<script>alert('Зарегистрируйтесь!Или проверте введеные данные!');</script>";
             }
+            $redirect_url = "http://localhost:63342/php-blog/components/MainPage.php";
+            header("Location: " . $redirect_url);
+            error_log("Redirecting to MainPage");
+            exit();
         }
     ?>
     <div class="signin">

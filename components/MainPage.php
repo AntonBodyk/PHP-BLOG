@@ -64,6 +64,29 @@ try {
 
 $totalPages = ceil($totalCount / $postsPerPage);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'delete_post') {
+        // Дополнительные проверки безопасности
+
+        try {
+            $postId = $_POST['post_id'];
+
+            // Удаление поста из базы данных
+            $deletePostQuery = "DELETE FROM posts WHERE id = :post_id";
+            $deletePostStmt = $dataBaseConnect->prepare($deletePostQuery);
+            $deletePostStmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
+            $deletePostStmt->execute();
+
+            // Отправляем успешный ответ
+            echo json_encode(['success' => true, 'message' => 'Пост успешно удален']);
+            exit;
+        } catch (PDOException $e) {
+            // Ошибка при выполнении запроса к базе данных
+            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+}
 
 ?>
 
@@ -78,6 +101,8 @@ $totalPages = ceil($totalCount / $postsPerPage);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Main Page</title>
 </head>
 <body>
@@ -86,25 +111,52 @@ $totalPages = ceil($totalCount / $postsPerPage);
         <p>Vue-Blog</p>
     </div>
     <div class="navbar-btns">
-<!--        <span class="user-name"></span>-->
-        <a href="SignPage.php">Войти</a>
+        <?php
+
+        if (isset($_COOKIE['user_name'])) {
+
+            echo '<span class="user-name">' . urldecode($_COOKIE['user_name']) . '</span>';
+            echo '<a href="logout.php">Выход</a>';
+            echo '<a href="#">Админ-панель</a>';
+        } else {
+            echo '<a href="SignPage.php">Войти</a>';
+            echo '<a href="#">Админ-панель</a>';
+        }
+        ?>
     </div>
 </div>
 <?php if (!empty($postsArray)) : ?>
-    <div>
+    <div class="main">
         <h3>Список постов</h3>
         <?php foreach ($postsArray as $post) : ?>
-            <div class="post-list">
-                <h2 class="post-title"><?= $post['title'] ?></h2>
-                <div class="post-create-date">
-                    Дата создания поста: <?= $post['created_at'] ?>
-                </div>
-                <div class="post-category">
-                    Категория поста: <?= $post['category'] ?>
-                </div>
-                <div class="post-body">
-                    <p><?= $post['body'] ?></p>
-                </div>
+                <div class="post">
+                    <h2 class="post-title"><?= $post['title'] ?></h2>
+                    <div class="post-create-date">
+                        Дата создания поста: <?= $post['created_at'] ?>
+                    </div>
+                    <div class="post-category">
+                        Категория поста: <?= $post['category'] ?>
+                    </div>
+                    <div class="post-body">
+                        <p><?= $post['body'] ?></p>
+                    </div>
+                    <div class="post-icons">
+                        <div class="post-like">
+                            <i class="fa-regular fa-thumbs-up"></i>
+                            <span><?= $post['likes_count'] ?></span>
+                        </div>
+                        <div class="post-dislike">
+                            <i class="fa-regular fa-thumbs-down"></i>
+                            <span><?= $post['dislikes_count'] ?></span>
+                        </div>
+                        <div class="post-comment">
+                            <i class="fa-regular fa-comment"></i>
+                            <span>0</span>
+                        </div>
+                        <button type="button" class="btn btn-danger delete-post" data-post-id="<?= $post['id'] ?>">Удалить пост</button>
+                    </div>
+
+
             </div>
         <?php endforeach; ?>
 
@@ -121,6 +173,35 @@ $totalPages = ceil($totalCount / $postsPerPage);
 <?php else : ?>
     <h2 class="error" style="color: red">Список постов пуст</h2>
 <?php endif; ?>
+
+<script>
+    $(document).ready(function() {
+        $('.delete-post').click(function() {
+            let postId = $(this).data('post-id');
+            console.log('Before AJAX request');
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: { action: 'delete_post', post_id: postId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        console.log('AJAX success');
+                        // Remove the deleted post from the UI
+                        $(`.post[data-post-id="${postId}"]`).remove();
+                        console.log('Пост успешно удален');
+                        location.reload();
+                    } else {
+                        console.log('Ошибка: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Произошла ошибка при отправке запроса');
+                }
+            });
+        });
+    });
+</script>
 
 </body>
 </html>
