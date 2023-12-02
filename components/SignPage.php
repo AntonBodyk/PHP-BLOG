@@ -14,10 +14,11 @@
         require '../vendor/autoload.php';
         require_once  '../classes/db.php';
         use Firebase\JWT\JWT;
-        function getAuthorizationToken($user_id, $secret_key, $name){
+        function getAuthorizationToken($user_id, $secret_key, $name, $role){
             $token_payload = array(
                 "user_id" => $user_id,
                 "user_name"=> $name,
+                "user_status"=> $role,
                 "exp_time" => time() + 3600
             );
             $authorizeToken = JWT::encode($token_payload, $secret_key, 'HS256');
@@ -51,8 +52,8 @@
 //            }
             $conn = connectToDataBase();
 
-            // Используем параметризованный запрос для предотвращения SQL-инъекций
-            $query = $conn->prepare("SELECT id, name, password FROM users WHERE email = ?");
+
+            $query = $conn->prepare("SELECT id, name, role, password FROM users WHERE email = ?");
             $query->execute([$email]);
 
 
@@ -61,16 +62,17 @@
             if ($user && password_verify($password, $user['password'])) {
 
                 $secret_key = bin2hex(random_bytes(32));
-                $token = getAuthorizationToken($user['id'], $user['name'], $secret_key);
+                $token = getAuthorizationToken($user['id'], $user['name'], $user['role'], $secret_key);
 
 
                 setcookie("token", $token, time() + 3600, "/");
                 setcookie("user_name", $user['name'], time() + 3600, "/");
+                setcookie("user_status", $user['role'], time() + 3600, "/");
 
                 echo "<script>console.log('Cookie установлено успешно');</script>";
 
             } else {
-                echo "<script>alert('Зарегистрируйтесь!Или проверте введеные данные!');</script>";
+                echo "<script>console.log('Зарегистрируйтесь!Или проверте введеные данные!');</script>";
             }
             $redirect_url = "http://localhost:63342/php-blog/components/MainPage.php";
             header("Location: " . $redirect_url);

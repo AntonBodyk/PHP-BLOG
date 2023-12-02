@@ -64,29 +64,35 @@ try {
 
 $totalPages = ceil($totalCount / $postsPerPage);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    if ($_POST['action'] === 'delete_post') {
-        // Дополнительные проверки безопасности
+if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+        if ($_POST['action'] === 'delete_post') {
+            // Дополнительные проверки безопасности
 
-        try {
-            $postId = $_POST['post_id'];
+            try {
+                $postId = $_POST['post_id'];
 
-            // Удаление поста из базы данных
-            $deletePostQuery = "DELETE FROM posts WHERE id = :post_id";
-            $deletePostStmt = $dataBaseConnect->prepare($deletePostQuery);
-            $deletePostStmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
-            $deletePostStmt->execute();
+                // Удаление поста из базы данных
+                $deletePostQuery = "DELETE FROM posts WHERE id = :post_id";
+                $deletePostStmt = $dataBaseConnect->prepare($deletePostQuery);
+                $deletePostStmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
+                $deletePostStmt->execute();
 
-            // Отправляем успешный ответ
-            echo json_encode(['success' => true, 'message' => 'Пост успешно удален']);
-            exit;
-        } catch (PDOException $e) {
-            // Ошибка при выполнении запроса к базе данных
-            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
-            exit;
+                // Отправляем успешный ответ
+                echo json_encode(['success' => true, 'message' => 'Пост успешно удален']);
+                exit;
+            } catch (PDOException $e) {
+                // Ошибка при выполнении запроса к базе данных
+                echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
+                exit;
+            }
         }
     }
+} else {
+    echo json_encode(['success' => false, 'message' => 'Вы не являетесь администратором!']);
+    exit();
 }
+
 
 ?>
 
@@ -142,12 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     </div>
                     <div class="post-icons">
                         <div class="post-like">
-                            <i class="fa-regular fa-thumbs-up"></i>
-                            <span><?= $post['likes_count'] ?></span>
+                            <i class="fa-regular fa-thumbs-up" data-post-id="<?= $post['id'] ?>"></i>
+                            <span class="like-count" data-post-id="<?= $post['id'] ?>"><?= $post['likes_count'] ?></span>
                         </div>
                         <div class="post-dislike">
-                            <i class="fa-regular fa-thumbs-down"></i>
-                            <span><?= $post['dislikes_count'] ?></span>
+                            <i class="fa-regular fa-thumbs-down" data-post-id="<?= $post['id'] ?>"></i>
+                            <span class="dislike-count" data-post-id="<?= $post['id'] ?>"><?= $post['dislikes_count'] ?></span>
                         </div>
                         <div class="post-comment">
                             <i class="fa-regular fa-comment"></i>
@@ -193,6 +199,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         location.reload();
                     } else {
                         console.log('Ошибка: ' + response.message);
+                        alert('Ошибка: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Произошла ошибка при отправке запроса');
+                }
+            });
+        });
+        $('.post-like, .post-dislike').click(function() {
+            let postId = $(this).find('i').data('post-id');
+            let action = $(this).hasClass('post-like') ? 'like_post' : 'dislike_post';
+
+            console.log('Post ID:', postId);
+            console.log('Action:', action);
+
+            $.ajax({
+                url: 'updateLikesAndDislikes.php',
+                type: 'POST',
+                data: { action: action, post_id: postId },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('AJAX Success:', response);
+
+                    if (response.success) {
+                        // Обновите значения лайков или дизлайков на фронтенде
+                        $(`.like-count[data-post-id="${postId}"]`).text(response.new_likes_count);
+                        $(`.dislike-count[data-post-id="${postId}"]`).text(response.new_dislikes_count);
+                        location.reload();
+                    } else {
+                        console.log('Ошибка: ' + response.message);
+                        alert('Ошибка: ' + response.message);
                     }
                 },
                 error: function() {

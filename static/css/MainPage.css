@@ -133,7 +133,8 @@ h3{
 }
 
 .pagination{
-    margin-bottom: 20px;
+    padding-bottom: 20px;
+    margin-left: 80px;
 }
 .pagination .page-item.active .page-link {
     background-color: #006400;
