@@ -64,14 +64,14 @@ try {
 
 $totalPages = ceil($totalCount / $postsPerPage);
 
-if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-        if ($_POST['action'] === 'delete_post') {
-            // Дополнительные проверки безопасности
 
-            try {
-                $postId = $_POST['post_id'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'delete_post') {
+        // Дополнительные проверки безопасности
 
+        try {
+            $postId = $_POST['post_id'];
+            if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
                 // Удаление поста из базы данных
                 $deletePostQuery = "DELETE FROM posts WHERE id = :post_id";
                 $deletePostStmt = $dataBaseConnect->prepare($deletePostQuery);
@@ -81,19 +81,19 @@ if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
                 // Отправляем успешный ответ
                 echo json_encode(['success' => true, 'message' => 'Пост успешно удален']);
                 exit;
-            } catch (PDOException $e) {
-                // Ошибка при выполнении запроса к базе данных
-                echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
-                exit;
+
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Вы не являетесь администратором!']);
+                exit();
             }
+
+        } catch (PDOException $e) {
+            // Ошибка при выполнении запроса к базе данных
+            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
+            exit;
         }
     }
-} else {
-    echo json_encode(['success' => false, 'message' => 'Вы не являетесь администратором!']);
-    exit();
 }
-
-
 ?>
 
 
