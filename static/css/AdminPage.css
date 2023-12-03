@@ -1,0 +1,43 @@
+h1{
+    font-family: Roboto, sans-serif;
+    font-size: 60px;
+    margin: 30px 0 0 35%;
+    color: darkcyan;
+}
+.user{
+    display: flex;
+    /*width: 500px;*/
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 40px 20px 0;
+}
+.user-number{
+    padding-left: 40px;
+}
+
+.user-name{
+    margin-left: 17%;
+}
+
+.btn-danger{
+    margin-left: 300px;
+}
+
+.pagination{
+    margin-left: 120px;
+}
+.pagination .page-item.active .page-link {
+    background-color: #006400;
+    border-color: #006400;
+}
+
+.pagination .page-link {
+    color: #006400;
+}
+
+
+.pagination .page-item:not(.active) .page-link:hover {
+    background-color: #004d00;
+    border-color: #004d00;
+    color: #ffffff;
+}

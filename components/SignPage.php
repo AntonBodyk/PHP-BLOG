@@ -60,10 +60,8 @@
             $user = $query->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
-
                 $secret_key = bin2hex(random_bytes(32));
-                $token = getAuthorizationToken($user['id'], $user['name'], $user['role'], $secret_key);
-
+                $token = getAuthorizationToken($user['id'], $secret_key, $user['name'], $user['role']);
 
                 setcookie("token", $token, time() + 3600, "/");
                 setcookie("user_name", $user['name'], time() + 3600, "/");
@@ -71,13 +69,13 @@
 
                 echo "<script>console.log('Cookie установлено успешно');</script>";
 
+
+                $redirect_url = "http://localhost:63342/php-blog/components/MainPage.php";
+                header("Location: " . $redirect_url);
+                exit();
             } else {
-                echo "<script>console.log('Зарегистрируйтесь!Или проверте введеные данные!');</script>";
+                echo "<script>alert('Неверный email или пароль');</script>";
             }
-            $redirect_url = "http://localhost:63342/php-blog/components/MainPage.php";
-            header("Location: " . $redirect_url);
-            error_log("Redirecting to MainPage");
-            exit();
         }
     ?>
     <div class="signin">

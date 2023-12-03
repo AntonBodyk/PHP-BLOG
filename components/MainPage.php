@@ -66,6 +66,7 @@ $totalPages = ceil($totalCount / $postsPerPage);
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    error_log('Получен AJAX-запрос');
     if ($_POST['action'] === 'delete_post') {
         // Дополнительные проверки безопасности
 
@@ -120,15 +121,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         <?php
 
         if (isset($_COOKIE['user_name'])) {
-
             echo '<span class="user-name">' . urldecode($_COOKIE['user_name']) . '</span>';
-            echo '<a href="logout.php">Выход</a>';
-            echo '<a href="#">Админ-панель</a>';
+            echo '<a class="logout" href="logout.php">Выход</a>';
+            echo "<a href='AdminPage.php' onclick='checkAdminStatus(event)'>Админ-панель</a>";
         } else {
             echo '<a href="SignPage.php">Войти</a>';
             echo '<a href="#">Админ-панель</a>';
         }
+
         ?>
+        <script>
+            function checkAdminStatus(event) {
+                event.preventDefault();
+                $.post("checkAdminStatus.php", function (response) {
+                    if (response === "admin") {
+                        window.location.href = "AdminPage.php";
+                    } else {
+                        alert("Вы не являетесь админом!");
+                    }
+                });
+            }
+        </script>
     </div>
 </div>
 <?php if (!empty($postsArray)) : ?>
@@ -195,8 +208,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         console.log('AJAX success');
                         // Remove the deleted post from the UI
                         $(`.post[data-post-id="${postId}"]`).remove();
-                        console.log('Пост успешно удален');
                         location.reload();
+                        alert('Пост успешно удален');
                     } else {
                         console.log('Ошибка: ' + response.message);
                         alert('Ошибка: ' + response.message);
@@ -234,6 +247,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 },
                 error: function() {
                     alert('Произошла ошибка при отправке запроса');
+                }
+            });
+        });
+        $('.logout').on('click', function() {
+
+            $.ajax({
+                url: 'logout.php',
+                type: 'POST',
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success) {
+                        window.location.href = window.location.href;
+                    }
+                },
+                error: function(error) {
+                    console.error('Ошибка:', error);
                 }
             });
         });
