@@ -8,6 +8,16 @@ h3{
     margin: 30px 0 0 100px;
     padding-top: 30px;
 }
+button.add-post{
+    background-color: darkslategray;
+    color: #ffffff;
+    margin: 20px 0 0 100px;
+}
+button.new-post{
+    background-color: darkslategray;
+    color: #ffffff;
+}
+
 .navbar{
     height: 50px;
     background-color: darkslategray;
@@ -44,9 +54,6 @@ h3{
     outline: none;
     margin-left: 20px;
 }
-.post-list{
-    margin: 20px 0 0 80px;
-}
 .post-title{
     padding: 20px 0 0 20px;
     max-width: 600px;
@@ -57,7 +64,7 @@ h3{
     max-height: 500px;
     background-color: white;
     border-radius: 10px;
-    margin: 20px 0 0 80px;
+    margin: 20px 0 0 100px;
     cursor: pointer;
 }
 .post-body{
@@ -134,7 +141,7 @@ h3{
 
 .pagination{
     padding-bottom: 20px;
-    margin-left: 80px;
+    margin-left: 100px;
 }
 .pagination .page-item.active .page-link {
     background-color: #006400;

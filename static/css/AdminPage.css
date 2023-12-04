@@ -11,6 +11,16 @@ h1{
     align-items: center;
     margin: 20px 40px 20px 0;
 }
+.search-user{
+    display: flex;
+    margin: 30px 0 30px 37%;
+}
+.search{
+    width: 350px;
+    height: 37px;
+    border-radius: 5px;
+}
+
 .user-number{
     padding-left: 40px;
 }

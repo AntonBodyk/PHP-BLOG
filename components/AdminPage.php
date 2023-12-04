@@ -76,6 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <body>
     <div class="admin-page">
         <h1>Админ-панель</h1>
+        <div class="search-user">
+            <input type="text" id="searchInput" class="search" placeholder="Поиск по имени пользователя" required>
+        </div>
+
+
         <?php foreach ($usersArray as $user) : ?>
             <div class="user">
                 <p class="user-number">Номер: <?= $user['id'] ?></p>
@@ -98,6 +103,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     <script>
         $(document).ready(function() {
+            $('#searchInput').on('input', function() {
+                let searchTerm = $(this).val().toLowerCase();
+
+                // Перебираем каждого пользователя и скрываем тех, чьи имена не содержат введенный текст
+                $('.user').each(function() {
+                    let userName = $(this).find('.user-name').text().toLowerCase();
+                    if (userName.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
             $('.delete-user').click(function() {
                 let userId = $(this).data('user-id');
                 console.log('Before AJAX request');

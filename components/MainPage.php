@@ -69,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     error_log('Получен AJAX-запрос');
     if ($_POST['action'] === 'delete_post') {
         // Дополнительные проверки безопасности
-
         try {
             $postId = $_POST['post_id'];
             if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
@@ -82,19 +81,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 // Отправляем успешный ответ
                 echo json_encode(['success' => true, 'message' => 'Пост успешно удален']);
                 exit;
-
             } else {
                 echo json_encode(['success' => false, 'message' => 'Вы не являетесь администратором!']);
                 exit();
             }
+        } catch (PDOException $e) {
+
+            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
+            exit;
+        }
+    } elseif ($_POST['action'] === 'add_post') {
+        try {
+                $title = isset($_POST['title']) ? $_POST['title'] : null;
+                $body = isset($_POST['body']) ? $_POST['body'] : null;
+                $category = isset($_POST['category']) ? $_POST['category'] : null;
+                $user_id = isset($_COOKIE['user_id']) ? $_COOKIE['user_id'] : null;
+
+                $newPostQuery = "INSERT INTO posts (title, body, category, user_id, created_at, updated_at) VALUES (:title, :body, :category, :user_id, NOW(), NOW())";
+                $newPost = $dataBaseConnect->prepare($newPostQuery);
+                $newPost->bindParam(':title', $title);
+                $newPost->bindParam(':body', $body);
+                $newPost->bindParam(':category', $category);
+                $newPost->bindParam(':user_id', $user_id);
+
+                $newPost->execute();
+
+                echo json_encode(['success' => true, 'message' => 'Пост успешно добавлен']);
+                exit;
+
 
         } catch (PDOException $e) {
-            // Ошибка при выполнении запроса к базе данных
             echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
             exit;
         }
     }
 }
+
+
+
 ?>
 
 
@@ -110,6 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <title>Main Page</title>
 </head>
 <body>
@@ -147,6 +172,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <?php if (!empty($postsArray)) : ?>
     <div class="main">
         <h3>Список постов</h3>
+        <?php
+            if(isset($_COOKIE['token'])) {
+                echo '<button type="button" class="btn add-post" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            Добавить пост
+                       </button>';
+            }
+        ?>
+
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Новый пост</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form class="add-post-form" method="post" id="add-post">
+                            <div class="mb-3">
+                                <label for="exampleInputTitle" class="form-label">Заголовок</label>
+                                <input type="text" class="form-control" id="exampleInputTitle" name="title" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="exampleInputCategory" class="form-label">Категория</label>
+                                <input type="text" class="form-control" id="exampleInputCategory" name="category" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="exampleInputBody" class="form-label">Текст</label>
+                                <textarea class="form-control" id="exampleInputBody" name="body"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn new-post">Добавить</button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
         <?php foreach ($postsArray as $post) : ?>
                 <div class="post">
                     <h2 class="post-title"><?= $post['title'] ?></h2>
@@ -172,7 +236,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             <i class="fa-regular fa-comment"></i>
                             <span>0</span>
                         </div>
-                        <button type="button" class="btn btn-danger delete-post" data-post-id="<?= $post['id'] ?>">Удалить пост</button>
+                        <?php
+                            if(isset($_COOKIE['user_status']) == 'admin'){
+                                echo '<button type="button" class="btn btn-danger delete-post" data-post-id="' . $post['id'] . '">Удалить пост</button>';
+                            }
+
+                        ?>
                     </div>
 
 
@@ -206,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 success: function(response) {
                     if (response.success) {
                         console.log('AJAX success');
-                        // Remove the deleted post from the UI
+
                         $(`.post[data-post-id="${postId}"]`).remove();
                         location.reload();
                         alert('Пост успешно удален');
@@ -236,7 +305,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     console.log('AJAX Success:', response);
 
                     if (response.success) {
-                        // Обновите значения лайков или дизлайков на фронтенде
                         $(`.like-count[data-post-id="${postId}"]`).text(response.new_likes_count);
                         $(`.dislike-count[data-post-id="${postId}"]`).text(response.new_dislikes_count);
                         location.reload();
@@ -267,6 +335,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             });
         });
     });
+    $('#add-post').submit(function(event) {
+        event.preventDefault();
+
+        let form = $(this);
+        $.ajax({
+            url: window.location.href,
+            type: 'POST',
+            data: $('#add-post').serialize() + '&action=add_post',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    form.trigger('reset');
+                    $('#exampleModal').modal('hide');
+                    alert('Пост успешно добавлен');
+                } else {
+                    console.log('Ошибка: ' + response.message);
+                    alert('Ошибка: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Произошла ошибка при отправке запроса');
+            }
+        });
+    });
+
 </script>
 
 </body>

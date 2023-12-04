@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = isset($_POST["password"]) ? $_POST['password'] : null;
     $confirmPassword = isset($_POST["confirm_password"]) ? $_POST['confirm_password'] : null;
 
-    // Валідація
+
     $errors = [];
 
     if (empty($name)) {
@@ -45,7 +45,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = 'Пароль і його підтвердження не співпадають';
     }
 
-    // Перевірка наявності помилок
     if (!empty($errors)) {
         foreach ($errors as $error) {
             echo '<div class="alert alert-danger" role="alert">' . $error . '</div>';

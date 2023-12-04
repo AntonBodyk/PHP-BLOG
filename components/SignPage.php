@@ -10,74 +10,66 @@
     <title>Вход в аккаунт</title>
 </head>
 <body>
-    <?php
-        require '../vendor/autoload.php';
-        require_once  '../classes/db.php';
-        use Firebase\JWT\JWT;
-        function getAuthorizationToken($user_id, $secret_key, $name, $role){
-            $token_payload = array(
-                "user_id" => $user_id,
-                "user_name"=> $name,
-                "user_status"=> $role,
-                "exp_time" => time() + 3600
-            );
-            $authorizeToken = JWT::encode($token_payload, $secret_key, 'HS256');
-            return $authorizeToken;
-        }
+<?php
+require '../vendor/autoload.php';
+require_once  '../classes/db.php';
+use Firebase\JWT\JWT;
 
-        if ($_SERVER["REQUEST_METHOD"] === "POST") {
-            $email = isset($_POST['email']) ? $_POST['email'] : null;
-            $password = isset($_POST['password']) ? $_POST['password'] : null;
+function generateAuthorizationToken($user_id, $secret_key, $name, $role){
+$token_payload = array(
+    "user_id" => $user_id,
+    "user_name" => $name,
+    "user_status" => $role,
+    "exp_time" => time() + 3600
+);
+    $authorizeToken = JWT::encode($token_payload, $secret_key, 'HS256');
+    return $authorizeToken;
+}
 
+function generateRandomToken($length = 32) {
+    return bin2hex(random_bytes($length));
+}
 
-//            $errors = [];
-//
-//            if (empty($email)) {
-//                $errors[] = 'Поле "Email" не може бути порожнім';
-//            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-//                $errors[] = 'Некоректний формат Email';
-//            }
-//
-//            if (empty($password)) {
-//                $errors[] = 'Поле "Пароль" не може бути порожнім';
-//            } elseif (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
-//                $errors[] = 'Пароль повинен містити принаймні 6 символів і хоча б одну велику літеру';
-//            }
-//
-//            if (!empty($errors)) {
-//                foreach ($errors as $error) {
-//                    echo '<div class="alert alert-danger" role="alert">' . $error . '</div>';
-//                }
-//                exit();
-//            }
-            $conn = connectToDataBase();
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $email = isset($_POST['email']) ? $_POST['email'] : null;
+    $password = isset($_POST['password']) ? $_POST['password'] : null;
+
+    $conn = connectToDataBase();
+    $query = $conn->prepare("SELECT id, name, role, password FROM users WHERE email = ?");
+    $query->execute([$email]);
+
+    $user = $query->fetch(PDO::FETCH_ASSOC);
+
+    if ($user && password_verify($password, $user['password'])) {
+
+    $remember_me_token = generateRandomToken();
 
 
-            $query = $conn->prepare("SELECT id, name, role, password FROM users WHERE email = ?");
-            $query->execute([$email]);
+    $update_token_query = $conn->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
+    $update_token_query->execute([$remember_me_token, $user['id']]);
 
 
-            $user = $query->fetch(PDO::FETCH_ASSOC);
+    $secret_key = bin2hex(random_bytes(32));
+    $token = generateAuthorizationToken($user['id'], $secret_key, $user['name'], $user['role']);
 
-            if ($user && password_verify($password, $user['password'])) {
-                $secret_key = bin2hex(random_bytes(32));
-                $token = getAuthorizationToken($user['id'], $secret_key, $user['name'], $user['role']);
+    setcookie("token", $token, time() + 3600, "/");
+    setcookie("user_name", $user['name'], time() + 3600, "/");
+    setcookie("user_status", $user['role'], time() + 3600, "/");
+    setcookie("user_id", $user['id'], time() + 3600, "/");
+    setcookie("remember_me_token", $remember_me_token, time() + 86400 * 30, "/"); // Наприклад, токен дійсний 30 днів
 
-                setcookie("token", $token, time() + 3600, "/");
-                setcookie("user_name", $user['name'], time() + 3600, "/");
-                setcookie("user_status", $user['role'], time() + 3600, "/");
+    echo "<script>console.log('Cookie установлено успешно');</script>";
 
-                echo "<script>console.log('Cookie установлено успешно');</script>";
+    $redirect_url = "http://localhost:63342/php-blog/components/MainPage.php";
+    header("Location: " . $redirect_url);
+    exit();
+    } else {
+        echo "<script>alert('Неверный email или пароль');</script>";
+    }
+}
 
 
-                $redirect_url = "http://localhost:63342/php-blog/components/MainPage.php";
-                header("Location: " . $redirect_url);
-                exit();
-            } else {
-                echo "<script>alert('Неверный email или пароль');</script>";
-            }
-        }
-    ?>
+?>
     <div class="signin">
       <h1>Вход</h1>
       <form action="#" class="signin-form" method="post">
