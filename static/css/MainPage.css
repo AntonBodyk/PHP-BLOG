@@ -59,12 +59,16 @@ button.new-post{
     max-width: 600px;
     color:darkslategray;
 }
+.posts-container{
+    display: flex;
+    flex-direction: column;
+}
 .post{
     width: 700px;
     max-height: 500px;
     background-color: white;
     border-radius: 10px;
-    margin: 20px 0 0 100px;
+    margin: 20px 30px 0 100px;
     cursor: pointer;
 }
 .post-body{
@@ -157,4 +161,31 @@ button.new-post{
     background-color: #004d00;
     border-color: #004d00;
     color: #ffffff;
+}
+
+.sidebar{
+    position: fixed;
+    top: 19%;
+    left: 60%;
+    width: 400px;
+    height: 510px;
+    background-color: white;
+    border-radius: 10px;
+}
+h2{
+    padding: 30px 0 0 50px;
+    color:darkslategray;
+}
+/*.popular-posts{*/
+/*    width: 300px;*/
+/*    margin: 20px 0 0 50px;*/
+/*}*/
+.popular-posts h3{
+    font-size: 15px;
+    color:rgb(43, 69, 69);
+    cursor: pointer;
+}
+.popular-posts p{
+    font-size: 15px;
+    color:darkmagenta
 }

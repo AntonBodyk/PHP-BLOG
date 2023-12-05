@@ -1,6 +1,7 @@
 <?php
 require_once '../classes/db.php';
 $dataBaseConnect = connectToDataBase();
+
 if(!isset($_COOKIE['user_name'])){
     echo json_encode(['success' => false, 'message' => 'Войдите в аккаунт!']);
     exit();
@@ -19,12 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $updateStmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
             $updateStmt->execute();
 
-            // Получите новые значения лайков или дизлайков
-            $newLikesCount = ($_POST['action'] === 'like_post') ? $_POST['likes_count'] + 1 : $_POST['likes_count'];
-            $newDislikesCount = ($_POST['action'] === 'dislike_post') ? $_POST['dislikes_count'] + 1 : $_POST['dislikes_count'];
+
+            $selectQuery = "SELECT likes_count, dislikes_count FROM posts WHERE id = :post_id";
+            $selectStmt = $dataBaseConnect->prepare($selectQuery);
+            $selectStmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
+            $selectStmt->execute();
+
+
+            $results = $selectStmt->fetchAll();
 
             // Отправляем успешный ответ
-            echo json_encode(['success' => true, 'new_likes_count' => $newLikesCount, 'new_dislikes_count' => $newDislikesCount]);
+            echo json_encode(['success' => true, 'new_likes_count' => $results[0]['likes_count'], 'new_dislikes_count' => $results[0]['dislikes_count']]);
             exit;
         } catch (PDOException $e) {
             // Ошибка при выполнении запроса к базе данных

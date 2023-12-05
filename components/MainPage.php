@@ -59,6 +59,7 @@ try {
     $totalCount = $countResult->fetch(PDO::FETCH_ASSOC)['total'];
 } catch (PDOException $e) {
     echo 'Помилка бази даних: ' . $e->getMessage();
+
 }
 
 
@@ -68,17 +69,15 @@ $totalPages = ceil($totalCount / $postsPerPage);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     error_log('Получен AJAX-запрос');
     if ($_POST['action'] === 'delete_post') {
-        // Дополнительные проверки безопасности
         try {
             $postId = $_POST['post_id'];
             if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
-                // Удаление поста из базы данных
+
                 $deletePostQuery = "DELETE FROM posts WHERE id = :post_id";
                 $deletePostStmt = $dataBaseConnect->prepare($deletePostQuery);
                 $deletePostStmt->bindParam(':post_id', $postId, PDO::PARAM_INT);
                 $deletePostStmt->execute();
 
-                // Отправляем успешный ответ
                 echo json_encode(['success' => true, 'message' => 'Пост успешно удален']);
                 exit;
             } else {
@@ -90,34 +89,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
             exit;
         }
-    } elseif ($_POST['action'] === 'add_post') {
-        try {
-                $title = isset($_POST['title']) ? $_POST['title'] : null;
-                $body = isset($_POST['body']) ? $_POST['body'] : null;
-                $category = isset($_POST['category']) ? $_POST['category'] : null;
-                $user_id = isset($_COOKIE['user_id']) ? $_COOKIE['user_id'] : null;
-
-                $newPostQuery = "INSERT INTO posts (title, body, category, user_id, created_at, updated_at) VALUES (:title, :body, :category, :user_id, NOW(), NOW())";
-                $newPost = $dataBaseConnect->prepare($newPostQuery);
-                $newPost->bindParam(':title', $title);
-                $newPost->bindParam(':body', $body);
-                $newPost->bindParam(':category', $category);
-                $newPost->bindParam(':user_id', $user_id);
-
-                $newPost->execute();
-
-                echo json_encode(['success' => true, 'message' => 'Пост успешно добавлен']);
-                exit;
-
-
-        } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
-            exit;
-        }
     }
 }
 
-
+$popularPostsQuery = $dataBaseConnect->prepare("SELECT * FROM posts WHERE likes_count > 495");
+$popularPostsQuery->execute();
+$popularPostsArray = $popularPostsQuery->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -192,16 +169,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                             <div class="mb-3">
                                 <label for="exampleInputTitle" class="form-label">Заголовок</label>
                                 <input type="text" class="form-control" id="exampleInputTitle" name="title" required>
+                                <div class="invalid-feedback" id="title-error"></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="exampleInputCategory" class="form-label">Категория</label>
                                 <input type="text" class="form-control" id="exampleInputCategory" name="category" required>
+                                <div class="invalid-feedback" id="category-error"></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="exampleInputBody" class="form-label">Текст</label>
                                 <textarea class="form-control" id="exampleInputBody" name="body"></textarea>
+                                <div class="invalid-feedback" id="body-error"></div>
                             </div>
 
                             <button type="submit" class="btn new-post">Добавить</button>
@@ -211,43 +191,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 </div>
             </div>
         </div>
-        <?php foreach ($postsArray as $post) : ?>
-                <div class="post">
-                    <h2 class="post-title"><?= $post['title'] ?></h2>
-                    <div class="post-create-date">
-                        Дата создания поста: <?= $post['created_at'] ?>
+
+            <div class="posts-container">
+                <div class="sidebar">
+                    <h2>Популярные посты</h2>
+                    <?php foreach ($popularPostsArray as $popularPost) : ?>
+                    <div class="popular-posts">
+                        <h3><?= $popularPost['title'] ?></h3>
+                        <p><?= $popularPost['likes_count'] ?></p>
                     </div>
-                    <div class="post-category">
-                        Категория поста: <?= $post['category'] ?>
-                    </div>
-                    <div class="post-body">
-                        <p><?= $post['body'] ?></p>
-                    </div>
-                    <div class="post-icons">
-                        <div class="post-like">
-                            <i class="fa-regular fa-thumbs-up" data-post-id="<?= $post['id'] ?>"></i>
-                            <span class="like-count" data-post-id="<?= $post['id'] ?>"><?= $post['likes_count'] ?></span>
+                    <?php endforeach; ?>
+                </div>
+                <?php foreach ($postsArray as $post) : ?>
+                    <div class="post">
+                        <h2 class="post-title"><?= $post['title'] ?></h2>
+                        <div class="post-create-date">
+                            Дата создания поста: <?= $post['created_at'] ?>
                         </div>
-                        <div class="post-dislike">
-                            <i class="fa-regular fa-thumbs-down" data-post-id="<?= $post['id'] ?>"></i>
-                            <span class="dislike-count" data-post-id="<?= $post['id'] ?>"><?= $post['dislikes_count'] ?></span>
+                        <div class="post-category">
+                            Категория поста: <?= $post['category'] ?>
                         </div>
-                        <div class="post-comment">
-                            <i class="fa-regular fa-comment"></i>
-                            <span>0</span>
+                        <div class="post-body">
+                            <p><?= $post['body'] ?></p>
                         </div>
-                        <?php
-                            if(isset($_COOKIE['user_status']) == 'admin'){
+                        <div class="post-icons">
+                            <div class="post-like">
+                                <i class="fa-regular fa-thumbs-up" data-post-id="<?= $post['id'] ?>"></i>
+                                <span class="like-count" data-post-id="<?= $post['id'] ?>"><?= $post['likes_count'] ?></span>
+                            </div>
+                            <div class="post-dislike">
+                                <i class="fa-regular fa-thumbs-down" data-post-id="<?= $post['id'] ?>"></i>
+                                <span class="dislike-count" data-post-id="<?= $post['id'] ?>"><?= $post['dislikes_count'] ?></span>
+                            </div>
+                            <div class="post-comment">
+                                <i class="fa-regular fa-comment"></i>
+                                <span>0</span>
+                            </div>
+                            <?php
+                            if(isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin'){
                                 echo '<button type="button" class="btn btn-danger delete-post" data-post-id="' . $post['id'] . '">Удалить пост</button>';
                             }
 
-                        ?>
+                            ?>
+                        </div>
                     </div>
-
-
+                <?php endforeach; ?>
             </div>
-        <?php endforeach; ?>
-
         <nav aria-label="Page navigation">
             <ul class="pagination">
                 <?php for ($page = 1; $page <= $totalPages; $page++) : ?>
@@ -335,30 +324,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             });
         });
     });
-    $('#add-post').submit(function(event) {
+    $('#add-post').submit(function (event) {
         event.preventDefault();
+
+        // Сброс предыдущих ошибок
+        $('.invalid-feedback').text('');
 
         let form = $(this);
         $.ajax({
-            url: window.location.href,
+            url: 'add-post.php',
             type: 'POST',
             data: $('#add-post').serialize() + '&action=add_post',
             dataType: 'json',
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     form.trigger('reset');
                     $('#exampleModal').modal('hide');
                     alert('Пост успешно добавлен');
+
+                    location.reload();
                 } else {
-                    console.log('Ошибка: ' + response.message);
-                    alert('Ошибка: ' + response.message);
+                    if (response.errors) {
+                        if (response.errors.title) {
+                            $('#title-error').text(response.errors.title).css('display', 'block');
+                        }
+                        if (response.errors.category) {
+                            $('#category-error').text(response.errors.category).css('display', 'block');
+                        }
+                        if (response.errors.body) {
+                            $('#body-error').text(response.errors.body).css('display', 'block');
+                        }
+                    } else {
+                        alert('Произошла ошибка при добавлении поста: ' + response.message);
+                    }
                 }
             },
-            error: function() {
-                alert('Произошла ошибка при отправке запроса');
-            }
+            error: function(xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+
+                if (xhr.responseText) {
+                    try {
+                        let response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            alert('Ошибка: ' + response.message);
+                        }
+                        if (response.errors) {
+                            if (response.errors.title) {
+                                $('#title-error').text(response.errors.title);
+                            }
+                            if (response.errors.category) {
+                                $('#category-error').text(response.errors.category);
+                            }
+                            if (response.errors.body) {
+                                $('#body-error').text(response.errors.body);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Ошибка при обработке JSON:', e);
+                        alert('Произошла ошибка при обработке данных');
+                    }
+                } else {
+                        alert('Произошла неизвестная ошибка');
+                    }
+                }
+            });
         });
-    });
+
 
 </script>
 
