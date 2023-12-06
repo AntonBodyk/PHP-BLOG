@@ -92,10 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-$popularPostsQuery = $dataBaseConnect->prepare("SELECT * FROM posts WHERE likes_count > 495");
+$popularPostsQuery = $dataBaseConnect->prepare("SELECT * FROM posts WHERE likes_count > 498");
 $popularPostsQuery->execute();
 $popularPostsArray = $popularPostsQuery->fetchAll(PDO::FETCH_ASSOC);
 
+function sortedPopularPosts($post1, $post2){
+    return $post2['likes_count'] - $post1['likes_count'];
+}
+usort($popularPostsArray, 'sortedPopularPosts');
 ?>
 
 
@@ -198,12 +202,12 @@ $popularPostsArray = $popularPostsQuery->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($popularPostsArray as $popularPost) : ?>
                     <div class="popular-posts">
                         <h3><?= $popularPost['title'] ?></h3>
-                        <p><?= $popularPost['likes_count'] ?></p>
+                        <p><i class="fa-solid fa-heart"></i><?= $popularPost['likes_count'] ?> </p>
                     </div>
                     <?php endforeach; ?>
                 </div>
                 <?php foreach ($postsArray as $post) : ?>
-                    <div class="post">
+                    <div class="post" >
                         <h2 class="post-title"><?= $post['title'] ?></h2>
                         <div class="post-create-date">
                             Дата создания поста: <?= $post['created_at'] ?>
@@ -214,6 +218,11 @@ $popularPostsArray = $popularPostsQuery->fetchAll(PDO::FETCH_ASSOC);
                         <div class="post-body">
                             <p><?= $post['body'] ?></p>
                         </div>
+                        <?php
+                        if(isset($_COOKIE['token']) ? $_COOKIE['token'] : null){
+                            echo '<a href="Post.php?id= '. $post['id'] . '" class="post-link">Подробнее</a>';
+                        }
+                        ?>
                         <div class="post-icons">
                             <div class="post-like">
                                 <i class="fa-regular fa-thumbs-up" data-post-id="<?= $post['id'] ?>"></i>
@@ -225,7 +234,21 @@ $popularPostsArray = $popularPostsQuery->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                             <div class="post-comment">
                                 <i class="fa-regular fa-comment"></i>
-                                <span>0</span>
+                                <?php
+                                $commentCountQuery = "SELECT p.*, COUNT(c.id) as comment_count 
+                                                                  FROM posts p
+                                                                  LEFT JOIN comments c ON p.id = c.post_id
+                                                                  WHERE p.id = :postId
+                                                                  GROUP BY p.id";
+                                $commentCountStmt = $dataBaseConnect->prepare($commentCountQuery);
+                                $commentCountStmt->bindParam(':postId', $post['id'], PDO::PARAM_INT);
+                                $commentCountStmt->execute();
+
+                                $commentCount = $commentCountStmt->fetch(PDO::FETCH_ASSOC)['comment_count'];
+
+                                echo "<span>$commentCount</span>";
+                                ?>
+
                             </div>
                             <?php
                             if(isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin'){

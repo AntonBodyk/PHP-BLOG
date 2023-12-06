@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         <?php foreach ($usersArray as $user) : ?>
             <div class="user">
-                <p class="user-number">Номер: <?= $user['id'] ?></p>
+                <p class="user-number">Id: <?= $user['id'] ?></p>
                 <p class="user-name">Имя пользователя: <?= $user['name'] ?></p>
                 <button type="button" class="btn btn-danger delete-user" data-user-id="<?= $user['id'] ?>">Удалить</button>
             </div>
