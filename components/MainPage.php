@@ -350,7 +350,6 @@ usort($popularPostsArray, 'sortedPopularPosts');
     $('#add-post').submit(function (event) {
         event.preventDefault();
 
-        // Сброс предыдущих ошибок
         $('.invalid-feedback').text('');
 
         let form = $(this);

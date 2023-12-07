@@ -9,7 +9,6 @@ function connectToDataBase(){
 
     try {
         $conn = new PDO($dsn, $username, $password);
-        // Устанавливаем режим ошибок PDO в исключения
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $conn;
     } catch (PDOException $e) {

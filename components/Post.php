@@ -6,11 +6,9 @@ $postId = null;
 $comments = null;
 
 if (isset($_GET['id'])) {
-    // Получаем значение параметра 'id'
     $postId = intval($_GET['id']);
 
-    // Ваш код для использования $postId, например, вывод на экран
-//    echo 'ID поста: ' . $postId;
+
     $postQuery = "SELECT * FROM posts WHERE id = :postId";
     $postStmt = $dbConnect->prepare($postQuery);
     $postStmt->bindParam(':postId', $postId, PDO::PARAM_INT);
@@ -28,8 +26,31 @@ if (isset($_GET['id'])) {
 
 
 } else {
-    // В случае отсутствия параметра 'id' можно вывести сообщение об ошибке или выполнить другие действия
     echo 'Параметр ID не указан в URL.';
+}
+
+if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
+    if($_POST['action'] === 'delete_comment'){
+        try{
+            $commentId = $_POST['comment_id'];
+            if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
+
+                $deleteCommentQuery = "DELETE FROM comments WHERE id = :comment_id";
+                $deleteCommentStmt = $dbConnect->prepare($deleteCommentQuery);
+                $deleteCommentStmt->bindParam(':comment_id', $commentId, PDO::PARAM_INT);
+                $deleteCommentStmt->execute();
+
+                echo json_encode(['success' => true, 'message' => 'Комментарий успешно удален']);
+                exit;
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Вы не являетесь администратором!']);
+                exit();
+            }
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
+            exit;
+        }
+    }
 }
 
 
@@ -50,7 +71,6 @@ if (isset($_GET['id'])) {
 </head>
 <body>
     <div class="main">
-
         <div class="post">
             <?php if($post) : ?>
                 <h2 class="post-title"><?= $post['title'] ?></h2>
@@ -76,7 +96,14 @@ if (isset($_GET['id'])) {
                             <strong><?= $comment['user_name'] ?></strong>
                             <p>Дата создания: <?= $comment['created_at'] ?></p>
                             <p><?= $comment['comment_text'] ?></p>
-                            <!-- Добавьте здесь форму для ответа на комментарий, если нужно -->
+                            <div class="comment-buttons">
+                                <?php
+                                if(isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin'){
+                                    echo '<button type="button" class="btn btn-danger delete-comment" data-comment-id="' . $comment['id'] . '">Удалить</button>';
+                                }
+                                ?>
+
+                            </div>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -93,7 +120,7 @@ if (isset($_GET['id'])) {
                         <textarea class="form-control" id="comment" rows="4" placeholder="Добавьте комментарий" name="comment_text"></textarea>
                         <div class="invalid-feedback error" id="text-error"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Добавить</button>
+                    <button type="submit" class="btn btn-primary add-comment">Добавить</button>
                 </form>
             </div>
         </div>
@@ -129,7 +156,7 @@ if (isset($_GET['id'])) {
                         }
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     console.error('AJAX Error:', status, error);
 
                     if (xhr.responseText) {
@@ -156,7 +183,31 @@ if (isset($_GET['id'])) {
                 }
             });
         });
+        $('.delete-comment').click(function() {
+            let commentId = $(this).data('comment-id');
+            console.log('Before AJAX request');
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: { action: 'delete_comment', comment_id: commentId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        console.log('AJAX success');
 
+                        $(`.comment[data-comment-id="$commentId}"]`).remove();
+                        location.reload();
+                        alert('Комментарий успешно удален');
+                    } else {
+                        console.log('Ошибка: ' + response.message);
+                        alert('Ошибка: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Произошла ошибка при отправке запроса');
+                }
+            });
+        });
     </script>
 </body>
 </html>

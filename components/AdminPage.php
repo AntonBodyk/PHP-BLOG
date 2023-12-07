@@ -35,21 +35,18 @@ $totalPages = ceil($totalCount / $userAmount);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'delete_user') {
-        // Дополнительные проверки безопасности
 
         try {
             $userId = $_POST['user_id'];
-                // Удаление поста из базы данных
+
                 $deleteUserQuery = "DELETE FROM users WHERE id = :user_id";
                 $deleteUserStmt = $dbConnect->prepare($deleteUserQuery);
                 $deleteUserStmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
                 $deleteUserStmt->execute();
 
-                // Отправляем успешный ответ
                 echo json_encode(['success' => true, 'message' => 'Пользователь успешно удален']);
                 exit;
         } catch (PDOException $e) {
-            // Ошибка при выполнении запроса к базе данных
             echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
             exit;
         }
