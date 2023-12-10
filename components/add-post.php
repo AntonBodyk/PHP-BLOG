@@ -1,6 +1,10 @@
 <?php
-require_once '../classes/db.php';
-$dataBaseConnect = connectToDataBase();
+require_once __DIR__ . "/../vendor/autoload.php";
+
+use DataBaseClass\Connection\DataBase;
+
+$dataBase = new DataBase();
+$dataBaseConnect = $dataBase->getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'add_post') {
@@ -12,16 +16,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 
         $errors = [];
-
-        if (!preg_match('/^[A-ZА-Я]/', $title)) {
+        if(empty($title)){
+            $errors['title'] = 'Заполните поле!';
+        }elseif (!preg_match('/^[A-ZА-Я]/u', $title)) {
             $errors['title'] = 'Заголовок должен начинаться с заглавной буквы';
         }
 
-        if (!preg_match('/^[A-ZА-Я]/', $body)) {
+        if(empty($body)){
+            $errors['body'] = 'Заполните поле!';
+        }elseif (!preg_match('/^[A-ZА-Я]/u', $body)) {
             $errors['body'] = 'Текст должен начинаться с заглавной буквы';
         }
 
-        if (!preg_match('/^[A-ZА-Я]/', $category)) {
+        if(empty($category)){
+            $errors['category'] = 'Заполните поле!';
+        }elseif (!preg_match('/^[A-ZА-Я]/u', $category)) {
             $errors['category'] = 'Категория должна начинаться с заглавной буквы';
         }
 

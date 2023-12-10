@@ -1,6 +1,10 @@
 <?php
-require_once '../classes/db.php';
-$dbConnect = connectToDataBase();
+require_once __DIR__ . "/../vendor/autoload.php";
+
+use DataBaseClass\Connection\DataBase;
+
+$dataBase = new DataBase();
+$dbConnect = $dataBase->getConnection();
 
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
@@ -11,7 +15,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
 
         $errors = [];
 
-        if (!preg_match('/^[A-ZА-Я]/', $text)) {
+
+        if(empty($text)){
+            $errors['comment_text'] = 'Заполните поле!';
+        }elseif (!preg_match('/^[A-ZА-Я]/u', $text)) {
             $errors['comment_text'] = 'Текст должен начинаться с заглавной буквы';
         }
 

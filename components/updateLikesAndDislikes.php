@@ -1,6 +1,10 @@
 <?php
-require_once '../classes/db.php';
-$dataBaseConnect = connectToDataBase();
+require_once __DIR__ . "/../vendor/autoload.php";
+
+use DataBaseClass\Connection\DataBase;
+$dataBase = new DataBase();
+
+$dataBaseConnect = $dataBase->getConnection();
 
 if(!isset($_COOKIE['user_name'])){
     echo json_encode(['success' => false, 'message' => 'Войдите в аккаунт!']);

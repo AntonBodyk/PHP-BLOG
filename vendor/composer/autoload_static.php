@@ -20,6 +20,10 @@ class ComposerStaticInit20fad51902f91e7fd3039e016a6556b5
             'Firebase\\JWT\\' => 13,
             'Faker\\' => 6,
         ),
+        'D' => 
+        array (
+            'DataBaseClass\\' => 14,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -34,6 +38,10 @@ class ComposerStaticInit20fad51902f91e7fd3039e016a6556b5
         'Faker\\' => 
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
+        ),
+        'DataBaseClass\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/classes/DataBaseClass',
         ),
     );
 

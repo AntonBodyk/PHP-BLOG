@@ -1,12 +1,14 @@
 <?php
-require '../vendor/autoload.php';
-require_once '../classes/db.php';
+require_once __DIR__ . "/../vendor/autoload.php";
+
 use Faker\Factory as Faker;
+use DataBaseClass\Connection\DataBase;
 
 
 $faker = Faker::create('en_US');
-$dataBaseConnect = connectToDataBase();
 
+$dataBase = new DataBase();
+$dataBaseConnect = $dataBase->getConnection();
 
 //try {
 //    for ($i = 0; $i < 1000; $i++) {
@@ -172,13 +174,13 @@ usort($popularPostsArray, 'sortedPopularPosts');
                         <form class="add-post-form" method="post" id="add-post">
                             <div class="mb-3">
                                 <label for="exampleInputTitle" class="form-label">Заголовок</label>
-                                <input type="text" class="form-control" id="exampleInputTitle" name="title" required>
+                                <input type="text" class="form-control" id="exampleInputTitle" name="title">
                                 <div class="invalid-feedback" id="title-error"></div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="exampleInputCategory" class="form-label">Категория</label>
-                                <input type="text" class="form-control" id="exampleInputCategory" name="category" required>
+                                <input type="text" class="form-control" id="exampleInputCategory" name="category">
                                 <div class="invalid-feedback" id="category-error"></div>
                             </div>
 
@@ -363,8 +365,8 @@ usort($popularPostsArray, 'sortedPopularPosts');
                     form.trigger('reset');
                     $('#exampleModal').modal('hide');
                     alert('Пост успешно добавлен');
-
-                    location.reload();
+                    window.location.href = window.location.href;
+                    // location.reload();
                 } else {
                     if (response.errors) {
                         if (response.errors.title) {

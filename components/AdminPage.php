@@ -1,7 +1,9 @@
 <?php
-require_once '../classes/db.php';
+require_once __DIR__ . "/../vendor/autoload.php";
+use DataBaseClass\Connection\DataBase;
 
-$dbConnect = connectToDataBase();
+$dataBase = new DataBase();
+$dbConnect = $dataBase->getConnection();
 
 
 $userAmount = 50;
@@ -103,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $('#searchInput').on('input', function() {
                 let searchTerm = $(this).val().toLowerCase();
 
-                // Перебираем каждого пользователя и скрываем тех, чьи имена не содержат введенный текст
                 $('.user').each(function() {
                     let userName = $(this).find('.user-name').text().toLowerCase();
                     if (userName.includes(searchTerm)) {
@@ -125,7 +126,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         console.log(response);
                         if (response.success) {
                             console.log('AJAX success');
-                            // Remove the deleted post from the UI
                             $(`.user[data-user-id="${userId}"]`).remove();
                             location.reload();
                             alert('Пользователь успешно удален');

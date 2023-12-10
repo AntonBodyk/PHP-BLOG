@@ -1,8 +1,11 @@
 <?php
+require_once __DIR__ . "/../vendor/autoload.php";
 
-require '../vendor/autoload.php';
-require_once '../classes/db.php';
+use DataBaseClass\Connection\DataBase;
 use Firebase\JWT\JWT;
+
+$dataBase = new DataBase();
+$dbConnection = $dataBase->getConnection();
 
 function generateAuthorizationToken($user_id, $secret_key, $name, $role){
     $token_payload = array(
@@ -25,11 +28,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
 
     $errors = [];
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if(empty($email)){
+        $errors['email'] = 'Заполните поле!';
+    }elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Некорректный формат Email';
     }
 
-    if (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
+    if(empty($password)){
+        $errors['password'] = 'Заполните поле!';
+    }elseif (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
         $errors['password'] = 'Пароль должен содержать не менее 6 символов и хотя бы одну заглавную букву';
     }
 
@@ -41,15 +48,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     }
 
     try {
-        $conn = connectToDataBase();
-        $query = $conn->prepare("SELECT id, name, role, password FROM users WHERE email = ?");
+        $query = $dbConnection->prepare("SELECT id, name, role, password FROM users WHERE email = ?");
         $query->execute([$email]);
 
         $user = $query->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password'])) {
             $remember_me_token = generateRandomToken();
-            $update_token_query = $conn->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
+            $update_token_query = $dbConnection->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
             $update_token_query->execute([$remember_me_token, $user['id']]);
             $secret_key = bin2hex(random_bytes(32));
             $token = generateAuthorizationToken($user['id'], $secret_key, $user['name'], $user['role']);
@@ -91,12 +97,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
       <form action="#" class="signin-form" method="post" id="sign">
           <div class="mb-3">
               <label for="exampleInputEmail1" class="form-label">Почта</label>
-              <input type="email" class="form-control" id="exampleInputEmail1" name="email" aria-describedby="emailHelp" required>
+              <input type="email" class="form-control" id="exampleInputEmail1" name="email" aria-describedby="emailHelp">
               <div class="invalid-feedback" id="email-error"></div>
           </div>
           <div class="mb-3">
               <label for="exampleInputPassword1" class="form-label">Пароль</label>
-              <input type="password" class="form-control" id="exampleInputPassword1" name="password" required>
+              <input type="password" class="form-control" id="exampleInputPassword1" name="password">
               <div class="invalid-feedback" id="password-error"></div>
           </div>
           <div class="mb-3 form-check">

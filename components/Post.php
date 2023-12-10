@@ -1,6 +1,9 @@
 <?php
-include_once '../classes/db.php';
-$dbConnect = connectToDataBase();
+require_once __DIR__ . "/../vendor/autoload.php";
+use DataBaseClass\Connection\DataBase;
+
+$dataBase = new DataBase();
+$dbConnect = $dataBase->getConnection();
 $post = null;
 $postId = null;
 $comments = null;
@@ -144,7 +147,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
                         form.trigger('reset');
                         // alert('Пост успешно добавлен');
 
-                        location.reload();
+                        window.location.href = window.location.href;
                     } else {
                         if (response.errors) {
                             if (response.errors.comment_text) {
