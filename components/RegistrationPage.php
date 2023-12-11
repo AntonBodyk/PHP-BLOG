@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require_once __DIR__ . "/../vendor/autoload.php";
 
 use DataBaseClass\Connection\Database;
@@ -6,47 +8,41 @@ use DataBaseClass\Connection\Database;
 $dataBase = new DataBase();
 $dbConnect = $dataBase->getConnection();
 
+$errors = [];
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
-    if ($_POST['action'] === 'registration') {
-        $name = isset($_POST["name"]) ? $_POST['name'] : null;
-        $email = isset($_POST["email"]) ? $_POST['email'] : null;
-        $password = isset($_POST["password"]) ? $_POST['password'] : null;
-        $confirmPassword = isset($_POST["confirm_password"]) ? $_POST['confirm_password'] : null;
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = isset($_POST["name"]) ? $_POST['name'] : null;
+    $email = isset($_POST["email"]) ? $_POST['email'] : null;
+    $password = isset($_POST["password"]) ? $_POST['password'] : null;
+    $confirmPassword = isset($_POST["confirm_password"]) ? $_POST['confirm_password'] : null;
 
-        $errors = [];
+    if (empty($name)) {
+        $errors['name'] = 'Заполните поле!';
+    } elseif (!preg_match('/^[A-ZА-Я]/u', $name)) {
+        $errors['name'] = 'Имя повинно починатися з великої літери';
+    }
 
-        if(empty($name)){
-            $errors['name'] = 'Заполните поле!';
-        }elseif (!preg_match('/^[A-ZА-Я]/u', $name)) {
-            $errors['name'] = 'Имя повинно починатися з великої літери';
-        }
+    if (empty($email)) {
+        $errors['email'] = 'Заполните поле!';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors['email'] = 'Некоректний формат Email';
+    }
 
-        if(empty($email)){
-            $errors['email'] = 'Заполните поле!';
-        }elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Некоректний формат Email';
-        }
+    if (empty($password)) {
+        $errors['password'] = 'Заполните поле!';
+    } elseif (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
+        $errors['password'] = 'Пароль повинен містити принаймні 6 символів і хоча б одну велику літеру';
+    }
 
-        if(empty($password)){
-            $errors['password'] = 'Заполните поле!';
-        }elseif (strlen($password) < 6 || !preg_match('/[A-Z]/', $password)) {
-            $errors['password'] = 'Пароль повинен містити принаймні 6 символів і хоча б одну велику літеру';
-        }
+    if (empty($confirmPassword)) {
+        $errors['confirm_password'] = 'Заполните поле!';
+    } elseif ($password !== $confirmPassword) {
+        $errors['confirm_password'] = 'Пароль і його підтвердження не співпадають';
+    }
 
-        if(empty($confirmPassword)){
-            $errors['confirm_password'] = 'Заполните поле!';
-        }elseif ($password !== $confirmPassword) {
-            $errors['confirm_password'] = 'Пароль і його підтвердження не співпадають';
-        }
-
-        header('Content-Type: application/json');
-
-        if (!empty($errors)) {
-            echo json_encode(['success' => false, 'errors' => $errors]);
-            exit();
-        }
-
+    if (!empty($errors)) {
+        $_SESSION['errors'] = $errors;
+    } else {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
         try {
@@ -58,19 +54,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
             $stmt->bindParam(':password', $hashedPassword);
 
             if ($stmt->execute()) {
-                echo json_encode(['success' => true]);
+                // Успешная регистрация, можно добавить сообщение об успешной регистрации
+                header('Location: SignPage.php');
                 exit();
             } else {
-                echo json_encode(['success' => false, 'message' => 'Error executing query']);
-                exit();
+                $errors['registration'] = 'Ошибка запроса';
             }
         } catch (PDOException $e) {
-            echo json_encode(['success' => false, 'message' => 'Помилка бази даних: ' . $e->getMessage()]);
-            exit();
+            $errors['database'] = 'Ошибка базы данных: ' . $e->getMessage();
         }
     }
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -88,108 +85,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
 
 <div class="registration">
     <h1>Регистрация</h1>
+    <?php if (!empty($successMessage)) : ?>
+        <?php echo "<script>alert('Регистрация успешна!')</script>" ?>
+    <?php endif; ?>
     <form class="registration-form" method="post" id="registration">
         <div class="mb-3">
             <label for="exampleInputName" class="form-label">Имя</label>
-            <input type="text" class="form-control" id="exampleInputName" name="name">
-            <div class="invalid-feedback" id="name-error"></div>
+            <input type="text" class="form-control <?php echo isset($errors['name']) ? 'is-invalid' : ''; ?>" id="exampleInputName" name="name" value="<?php echo empty($errors) ? '' : htmlspecialchars(isset($_POST['name']) ? $_POST['name'] : ''); ?>">
+            <?php if (isset($errors['name'])) : ?>
+                <div class="invalid-feedback"><?php echo $errors['name']; ?></div>
+            <?php endif; ?>
         </div>
 
         <div class="mb-3">
             <label for="exampleInputEmail1" class="form-label">Email</label>
-            <input type="email" class="form-control" id="exampleInputEmail1" name="email" aria-describedby="emailHelp">
-            <div class="invalid-feedback" id="email-error"></div>
+            <input type="email" class="form-control <?php echo isset($errors['email']) ? 'is-invalid' : ''; ?>" id="exampleInputEmail1" name="email" aria-describedby="emailHelp" value="<?php echo empty($errors) ? '' : htmlspecialchars(isset($_POST['email']) ? $_POST['email'] : ''); ?>">
+            <?php if (isset($errors['email'])) : ?>
+                <div class="invalid-feedback"><?php echo $errors['email']; ?></div>
+            <?php endif; ?>
         </div>
 
         <div class="mb-3">
-            <label for="exampleInputPassword1" class="form-label">Пароль</label>
-            <input type="password" class="form-control" id="exampleInputPassword1" name="password">
-            <div class="invalid-feedback" id="password-error"></div>
+            <label for="exampleInputPassword" class="form-label">Пароль</label>
+            <input type="password" class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>" id="exampleInputPassword" name="password" value="<?php echo empty($errors) ? '' : htmlspecialchars(isset($_POST['password']) ? $_POST['password'] : ''); ?>">
+            <?php if (isset($errors['password'])) : ?>
+                <div class="invalid-feedback"><?php echo $errors['password']; ?></div>
+            <?php endif; ?>
         </div>
 
         <div class="mb-3">
-            <label for="exampleInputConfirmPassword1" class="form-label">Подтвердите пароль</label>
-            <input type="password" class="form-control" id="exampleInputConfirmPassword1" name="confirm_password">
-            <div class="invalid-feedback" id="confirm-password-error"></div>
+            <label for="exampleInputPasswordConfirm" class="form-label">Подтвердите пароль</label>
+            <input type="password" class="form-control <?php echo isset($errors['confirm_password']) ? 'is-invalid' : ''; ?>" id="exampleInputPasswordConfirm" name="confirm_password" value="<?php echo empty($errors) ? '' : htmlspecialchars(isset($_POST['confirm_password']) ? $_POST['confirm_password'] : ''); ?>">
+            <?php if (isset($errors['confirm_password'])) : ?>
+                <div class="invalid-feedback"><?php echo $errors['confirm_password']; ?></div>
+            <?php endif; ?>
         </div>
 
         <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+        <?php
+        if (empty($errors) && isset($_POST)) {
+            $_POST = array();
+        }
+        ?>
     </form>
+
 </div>
-
-
-<script>
-    $(document).ready(function() {
-        $('#registration').submit(function (event) {
-            event.preventDefault();
-
-            $('.invalid-feedback').text('');
-
-            let form = $(this);
-            $.ajax({
-                url: 'RegistrationPage.php',
-                type: 'POST',
-                data: $('#registration').serialize() + '&action=registration',
-                dataType: 'json',
-                success: function (response) {
-                    if (response.success) {
-                        form.trigger('reset');
-                        alert('Пользователь зарегистрирован!');
-
-                        window.location.href = 'SignPage.php';
-                    } else {
-                        if (response.errors) {
-                            if (response.errors.name) {
-                                $('#name-error').text(response.errors.name).css('display', 'block');
-                            }
-                            if (response.errors.email) {
-                                $('#email-error').text(response.errors.email).css('display', 'block');
-                            }
-                            if (response.errors.password) {
-                                $('#password-error').text(response.errors.password).css('display', 'block');
-                            }
-                            if (response.errors.confirm_password) {
-                                $('#confirm-password-error').text(response.errors.confirm_password).css('display', 'block');
-                            }
-                        } else {
-                            alert('Произошла ошибка при регистрации: ' + response.message);
-                        }
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-
-                    if (xhr.responseText) {
-                        try {
-                            let response = JSON.parse(xhr.responseText);
-                            if (response.message) {
-                                alert('Ошибка: ' + response.message);
-                            }
-                            if (response.errors) {
-                                if (response.errors.name) {
-                                    $('#name-error').text(response.errors.name).css('display', 'block');
-                                }
-                                if (response.errors.email) {
-                                    $('#email-error').text(response.errors.email).css('display', 'block');
-                                }
-                                if (response.errors.password) {
-                                    $('#password-error').text(response.errors.password).css('display', 'block');
-                                }
-                                if (response.errors.confirm_password) {
-                                    $('#confirm-password-error').text(response.errors.confirm_password).css('display', 'block');
-                                }
-                            }
-                        } catch (e) {
-                            console.error('Ошибка при обработке JSON:', e);
-                            alert('Произошла ошибка при обработке данных');
-                        }
-                    } else {
-                        alert('Произошла неизвестная ошибка');
-                    }
-                }
-            });
-        });
-    });
-</script>
 </body>
 </html>

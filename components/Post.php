@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . "/../vendor/autoload.php";
 use DataBaseClass\Connection\DataBase;
 
@@ -7,6 +8,7 @@ $dbConnect = $dataBase->getConnection();
 $post = null;
 $postId = null;
 $comments = null;
+
 
 if (isset($_GET['id'])) {
     $postId = intval($_GET['id']);
@@ -30,6 +32,53 @@ if (isset($_GET['id'])) {
 
 } else {
     echo 'Параметр ID не указан в URL.';
+}
+
+$errors = [];
+if($_SERVER['REQUEST_METHOD'] == "POST"){
+        $comment_text = isset($_POST['comment_text']) ? $_POST['comment_text'] : null;
+        $user_id = $_COOKIE['user_id'];
+        $post_id = isset($_POST['post_id']) ? $_POST['post_id'] : null;
+
+
+        if(empty($comment_text)){
+            $errors['comment_text'] = 'Заполните поле!';
+        }elseif (!preg_match('/^[A-ZА-Я]/u', $comment_text)) {
+            $errors['comment_text'] = 'Текст должен начинаться с заглавной буквы';
+        }
+
+        if (!empty($errors)) {
+            $_SESSION['errors'] = $errors;
+        }else{
+            try {
+                $userNameQuery = "SELECT name FROM users WHERE id = :user_id";
+                $userNameStmt = $dbConnect->prepare($userNameQuery);
+                $userNameStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+                $userNameStmt->execute();
+                $user = $userNameStmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$user) {
+                    echo json_encode(['success' => false, 'message' => 'Пользователь не найден']);
+                    exit();
+                }
+
+
+                $commentQuery = "INSERT INTO comments (comment_text, user_id, user_name, post_id, created_at, updated_at) VALUES (:comment_text, :user_id, :user_name, :post_id, NOW(), NOW())";
+                $newComment = $dbConnect->prepare($commentQuery);
+                $newComment->bindParam(':comment_text', $comment_text);
+                $newComment->bindParam(':user_id', $user_id);
+                $newComment->bindParam(':user_name', $user['name']);
+                $newComment->bindParam(':post_id', $post_id);
+
+                $newComment->execute();
+
+            }catch (PDOException $e){
+                $errors['message'] = 'Ошибка базы данных: ' . $e->getMessage();
+                $_SESSION['errors'] = $errors;
+//                header("Location: window.location.href"); // Перенаправление на страницу входа
+//                exit();
+            }
+        }
 }
 
 if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
@@ -120,8 +169,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
                 <form class="comment-form" method="post" id="add-comment">
                     <div class="form-group">
                         <input type="hidden" name="post_id" value="<?php echo $postId; ?>">
-                        <textarea class="form-control" id="comment" rows="4" placeholder="Добавьте комментарий" name="comment_text"></textarea>
-                        <div class="invalid-feedback error" id="text-error"></div>
+                        <textarea class="form-control <?php echo isset($errors['comment_text']) ? 'is-invalid' : ''; ?>" id="comment" rows="4" placeholder="Добавьте комментарий" name="comment_text"><?php echo (isset($_POST['comment_text']) && !empty($errors)) ? htmlspecialchars($_POST['comment_text']) : ''; ?></textarea>
+                        <?php if (isset($errors['comment_text'])) : ?>
+                            <div class="invalid-feedback"><?php echo $errors['comment_text']; ?></div>
+                        <?php endif; ?>
                     </div>
                     <button type="submit" class="btn btn-primary add-comment">Добавить</button>
                 </form>
@@ -130,62 +181,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
 
 
     <script>
-        $('#add-comment').submit(function (event) {
-            event.preventDefault();
-
-            // Сброс предыдущих ошибок
-            $('.invalid-feedback').text('');
-
-            let form = $(this);
-            $.ajax({
-                url: 'add-comment.php',
-                type: 'POST',
-                data: $('#add-comment').serialize() + '&action=add_comment',
-                dataType: 'json',
-                success: function (response) {
-                    if (response.success) {
-                        form.trigger('reset');
-                        // alert('Пост успешно добавлен');
-
-                        window.location.href = window.location.href;
-                    } else {
-                        if (response.errors) {
-                            if (response.errors.comment_text) {
-                                $('#text-error').text(response.errors.comment_text).css('display', 'block');
-                            }
-
-                        } else {
-                            alert('Произошла ошибка при добавлении поста: ' + response.message);
-                        }
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error('AJAX Error:', status, error);
-
-                    if (xhr.responseText) {
-                        console.log('Response Text:', xhr.responseText);
-                        try {
-                            let response = JSON.parse(xhr.responseText);
-                            if (response.message) {
-                                alert('Ошибка: ' + response.message);
-                            }
-                            if (response.errors) {
-                                if (response.errors.comment_text) {
-                                    $('#text-error').text(response.errors.comment_text);
-                                }
-
-                            }
-                        } catch (e) {
-                            console.error('Ошибка при обработке JSON:', e);
-                            alert('Произошла ошибка при обработке данных');
-                        }
-                    } else {
-                        console.error('Произошла неизвестная ошибка', response);
-                        alert('Произошла неизвестная ошибка');
-                    }
-                }
-            });
-        });
         $('.delete-comment').click(function() {
             let commentId = $(this).data('comment-id');
             console.log('Before AJAX request');

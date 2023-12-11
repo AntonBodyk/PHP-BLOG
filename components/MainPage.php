@@ -37,6 +37,7 @@ $dataBaseConnect = $dataBase->getConnection();
 //} catch (PDOException $e) {
 //    echo 'Помилка бази даних: ' . $e->getMessage();
 //}
+
 $postsPerPage = 50;
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($current_page - 1) * $postsPerPage;
@@ -366,7 +367,6 @@ usort($popularPostsArray, 'sortedPopularPosts');
                     $('#exampleModal').modal('hide');
                     alert('Пост успешно добавлен');
                     window.location.href = window.location.href;
-                    // location.reload();
                 } else {
                     if (response.errors) {
                         if (response.errors.title) {

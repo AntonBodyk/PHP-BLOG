@@ -6,6 +6,8 @@ use DataBaseClass\Connection\DataBase;
 $dataBase = new DataBase();
 $dataBaseConnect = $dataBase->getConnection();
 
+$errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'add_post') {
 
@@ -14,8 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $category = isset($_POST['category']) ? $_POST['category'] : null;
         $user_id = isset($_COOKIE['user_id']) ? $_COOKIE['user_id'] : null;
 
-
-        $errors = [];
         if(empty($title)){
             $errors['title'] = 'Заполните поле!';
         }elseif (!preg_match('/^[A-ZА-Я]/u', $title)) {
