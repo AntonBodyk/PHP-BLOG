@@ -72,4 +72,7 @@ button.add-comment:hover{
     margin-bottom: 10px;
 }
 
+.answers-list{
+    list-style-type: none;
+}
 
