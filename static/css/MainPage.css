@@ -196,3 +196,12 @@ h2{
     text-decoration: none;
 
 }
+button.btn-sorted{
+    background-color: darkslategray;
+    color: #ffffff;
+    margin: 20px 0 20px 100px;
+}
+button.btn-sorted:hover{
+    background-color: darkslategray;
+    color: #ffffff;
+}

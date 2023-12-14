@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;1,300&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="../static/css/AdminPage.css">
-    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <title>Админ-панель</title>
 </head>
 <body>
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     <div class="search-user">
         <form method="post">
             <input type="text" name="search" class="search" placeholder="Поиск по имени пользователя" required>
-            <button type="submit" class="btn btn-primary">Поиск</button>
+            <button type="submit" class="btn btn-primary btn-search">Поиск</button>
         </form>
     </div>
 
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <ul class="pagination">
                 <?php for ($page = 1; $page <= $totalPages; $page++) : ?>
                     <li class="page-item <?php if ($page == $currentPage) echo 'active'; ?>">
-                        <a class="page-link" href="?page=<?= $page ?>&search=<?= $searchTerm ?>"><?= $page ?></a>
+                        <a class="page-link" href="?page=<?= $page ?>"><?= $page ?></a>
                     </li>
                 <?php endfor; ?>
             </ul>
@@ -104,48 +104,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 </div>
 
 <script>
-    $(document).ready(function() {
-        // $('#searchInput').on('input', function() {
-        //     let searchTerm = $(this).val().toLowerCase();
-        //
-        //     $('.user').each(function() {
-        //         let userName = $(this).find('.user-name').text().toLowerCase();
-        //         if (userName.includes(searchTerm)) {
-        //             $(this).show();
-        //         } else {
-        //             $(this).hide();
-        //         }
-        //     });
-        // });
-        $('.delete-user').click(function() {
-            let userId = $(this).data('user-id');
-            console.log('Before AJAX request');
-            $.ajax({
-                url: window.location.href,
-                type: 'POST',
-                data: { action: 'delete_user', user_id: userId },
-                dataType: 'json',
-                success: function(response) {
-                    console.log(response);
-                    if (response.success) {
-                        console.log('AJAX success');
-                        $(`.user[data-user-id="${userId}"]`).remove();
-                        location.reload();
-                        alert('Пользователь успешно удален');
-                    } else {
-                        console.log('Ошибка: ' + response.message);
-                        alert('Ошибка: ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert('Произошла ошибка при отправке запроса');
+    $('.delete-user').click(function() {
+        let userId = $(this).data('user-id');
+        console.log('Before AJAX request');
+        $.ajax({
+            url: window.location.href,
+            type: 'POST',
+            data: { action: 'delete_user', user_id: userId },
+            dataType: 'json',
+            success: function(response) {
+                console.log(response);
+                if (response.success) {
+                    console.log('AJAX success');
+                    $(`.user[data-user-id="${userId}"]`).remove();
+                    location.reload();
+                    alert('Пользователь успешно удален');
+                } else {
+                    console.log('Ошибка: ' + response.message);
+                    alert('Ошибка: ' + response.message);
                 }
-            });
+            },
+            error: function() {
+                alert('Произошла ошибка при отправке запроса');
+            }
         });
     });
 </script>
+
 </body>
 </html>
-
-
-

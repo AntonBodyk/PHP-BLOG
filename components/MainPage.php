@@ -41,10 +41,22 @@ $dataBaseConnect = $dataBase->getConnection();
 $postsPerPage = 50;
 $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($current_page - 1) * $postsPerPage;
+$categoryPosts = isset($_GET['category']) ? $_GET['category'] : null;
+
 
 try {
-    $postsQuery = "SELECT * FROM posts LIMIT :limit OFFSET :offset";
+    $postsQuery = "SELECT * FROM posts";
+
+    if($categoryPosts){
+        $postsQuery.= " WHERE category = :category";
+    }
+
+    $postsQuery .= " LIMIT :limit OFFSET :offset";
     $stmt = $dataBaseConnect->prepare($postsQuery);
+
+    if($categoryPosts){
+        $stmt->bindParam(':category', $categoryPosts, PDO::PARAM_STR);
+    }
     $stmt->bindParam(':limit', $postsPerPage, PDO::PARAM_INT);
     $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
@@ -56,14 +68,21 @@ try {
 }
 
 
-try {
-    $countQuery = "SELECT COUNT(*) as total FROM posts";
-    $countResult = $dataBaseConnect->query($countQuery);
-    $totalCount = $countResult->fetch(PDO::FETCH_ASSOC)['total'];
-} catch (PDOException $e) {
-    echo 'Помилка бази даних: ' . $e->getMessage();
+$countQuery = "SELECT COUNT(*) as total FROM posts";
 
+if ($categoryPosts) {
+    $countQuery .= " WHERE category = :category";
 }
+
+$countResult = $dataBaseConnect->prepare($countQuery);
+
+if ($categoryPosts) {
+    $countResult->bindParam(':category', $categoryPosts, PDO::PARAM_STR);
+}
+
+$countResult->execute();
+
+$totalCount = $countResult->fetch(PDO::FETCH_ASSOC)['total'];
 
 
 $totalPages = ceil($totalCount / $postsPerPage);
@@ -162,6 +181,19 @@ usort($popularPostsArray, 'sortedPopularPosts');
                             Добавить пост
                        </button>';
             }
+            if(isset($_COOKIE['token'])) {
+                echo '<div class="dropdown-sorted">
+                        <button class="btn btn-secondary dropdown-toggle btn-sorted" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                            Выбрать категорию
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                            <li><a class="dropdown-item" href="?category=Облачные сервисы">Облачные сервисы</a></li>
+                            <li><a class="dropdown-item" href="?category=Технологии">Технологии</a></li>
+                            <li><a class="dropdown-item" href="?category=Игры и развлечения">Игры и развлечения</a></li>
+                            <li><a class="dropdown-item" href="?category=IT-новости">IT-новости</a></li>
+                        </ul>
+                    </div>';
+                }
         ?>
 
         <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -267,7 +299,7 @@ usort($popularPostsArray, 'sortedPopularPosts');
             <ul class="pagination">
                 <?php for ($page = 1; $page <= $totalPages; $page++) : ?>
                     <li class="page-item <?php if ($page == $current_page) echo 'active'; ?>">
-                        <a class="page-link" href="?page=<?= $page ?>"><?= $page ?></a>
+                        <a class="page-link" href="?page=<?= $page ?>&category=<?= $categoryPosts ?>"><?= $page ?></a>
                     </li>
                 <?php endfor; ?>
             </ul>
