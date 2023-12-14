@@ -5,15 +5,16 @@ use DataBaseClass\Connection\DataBase;
 $dataBase = new DataBase();
 $dbConnect = $dataBase->getConnection();
 
-$searchTerm = isset($_POST['search']) ? $_POST['search'] : '';
-
 $userAmount = 50;
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($currentPage - 1) * $userAmount;
 
+$searchTerm = isset($_GET['search']) ? $_GET['search'] : '';
 $filteredUsers = [];
 
+
 try {
+
     $usersQuery = "SELECT * FROM users WHERE LOWER(name) LIKE :searchTerm LIMIT :limit OFFSET :offset";
     $stmt = $dbConnect->prepare($usersQuery);
     $searchTerm = '%' . strtolower($searchTerm) . '%';
@@ -76,8 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 <div class="admin-page">
     <h1>Админ-панель</h1>
     <div class="search-user">
-        <form method="post">
+        <form method="get">
             <input type="text" name="search" class="search" placeholder="Поиск по имени пользователя" required>
+            <?php if (isset($errors['search'])) : ?>
+                <div class="invalid-feedback"><?php echo $errors['search']; ?></div>
+            <?php endif; ?>
             <button type="submit" class="btn btn-primary btn-search">Поиск</button>
         </form>
     </div>
@@ -95,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             <ul class="pagination">
                 <?php for ($page = 1; $page <= $totalPages; $page++) : ?>
                     <li class="page-item <?php if ($page == $currentPage) echo 'active'; ?>">
-                        <a class="page-link" href="?page=<?= $page ?>"><?= $page ?></a>
+                        <a class="page-link" href="?page=<?= $page ?>&search=<?= urlencode($searchTerm) ?>"><?= $page ?></a>
                     </li>
                 <?php endfor; ?>
             </ul>
@@ -117,8 +121,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 if (response.success) {
                     console.log('AJAX success');
                     $(`.user[data-user-id="${userId}"]`).remove();
-                    location.reload();
                     alert('Пользователь успешно удален');
+                    location.reload();
                 } else {
                     console.log('Ошибка: ' + response.message);
                     alert('Ошибка: ' + response.message);

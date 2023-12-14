@@ -97,11 +97,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <div class="signin">
     <h1>Вход</h1>
-    <?php if (isset($_SESSION['errors']['message'])) : ?>
-        <div class="alert alert-danger" role="alert">
-            <?php echo $_SESSION['errors']['message']; ?>
-        </div>
-    <?php endif; ?>
     <form class="signin-form" method="post" id="sign">
         <div class="mb-3">
             <label for="exampleInputEmail1" class="form-label">Email</label>
