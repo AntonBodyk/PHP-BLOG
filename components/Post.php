@@ -100,6 +100,29 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
     }
 }
 
+if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
+    if($_POST['action'] === 'delete_answer'){
+        try{
+            $answerId = $_POST['answer_id'];
+            if (isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin') {
+
+                $deleteCommentQuery = "DELETE FROM comment_answers WHERE id = :answer_id";
+                $deleteCommentStmt = $dbConnect->prepare($deleteCommentQuery);
+                $deleteCommentStmt->bindParam(':answer_id', $answerId, PDO::PARAM_INT);
+                $deleteCommentStmt->execute();
+
+                echo json_encode(['success' => true, 'message' => 'Ответ на комментарий успешно удален']);
+                exit;
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Вы не являетесь администратором!']);
+                exit();
+            }
+        } catch (PDOException $e) {
+            echo json_encode(['success' => false, 'message' => 'Ошибка базы данных: ' . $e->getMessage()]);
+            exit;
+        }
+    }
+}
 
 
 ?>
@@ -158,6 +181,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
                                         echo '<strong>' . $answer['user_name'] . '</strong>';
                                         echo '<p>Дата создания: ' . $answer['created_at'] . '</p>';
                                         echo '<p>' . $answer['answer_text'] . '</p>';
+                                        if(isset($_COOKIE['user_status']) && $_COOKIE['user_status'] === 'admin'){
+                                            echo '<button type="button" class="btn btn-danger delete-answer" data-answer-id="' . $answer['id'] . '">Удалить</button>';
+                                        }
                                         echo '</li>';
                                     }
                                     echo '</ul>';
@@ -233,6 +259,31 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])){
                         $(`.comment[data-comment-id="$commentId}"]`).remove();
                         location.reload();
                         alert('Комментарий успешно удален');
+                    } else {
+                        console.log('Ошибка: ' + response.message);
+                        alert('Ошибка: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Произошла ошибка при отправке запроса');
+                }
+            });
+        });
+        $('.delete-answer').click(function() {
+            let answerId = $(this).data('answer-id');
+            console.log('Before AJAX request');
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: { action: 'delete_answer', answer_id: answerId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        console.log('AJAX success');
+
+                        $(`.answer[data-answer-id="$answerId}"]`).remove();
+                        location.reload();
+                        alert('Ответ на комментарий успешно удален');
                     } else {
                         console.log('Ошибка: ' + response.message);
                         alert('Ошибка: ' + response.message);

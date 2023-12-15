@@ -76,3 +76,7 @@ button.add-comment:hover{
     list-style-type: none;
 }
 
+.delete-answer{
+    margin-bottom: 10px;
+}
+

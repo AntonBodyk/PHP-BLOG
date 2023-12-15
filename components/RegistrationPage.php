@@ -54,7 +54,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt->bindParam(':password', $hashedPassword);
 
             if ($stmt->execute()) {
-                // Успешная регистрация, можно добавить сообщение об успешной регистрации
                 header('Location: SignPage.php');
                 exit();
             } else {
